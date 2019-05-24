@@ -59,7 +59,50 @@ public class CommunicationThread extends Thread {
             } else if ("poll".equals(elements[0])) {
                 response = "Operation executed successfully, cmd=" + elements[0] + "\n";
                 Log.v("poll", "poll");
+
+                String dayTimeProtocol = null;
+                try {
+                    Socket socket = new Socket("utcnist.colorado.edu", 13);
+                    BufferedReader bufferedReader = Utilities.getReader(socket);
+                    bufferedReader.readLine();
+                    dayTimeProtocol = bufferedReader.readLine();
+                    Log.d("timestamp", "The server returned: " + dayTimeProtocol);
+                } catch (UnknownHostException unknownHostException) {
+                    Log.d("timestamp", unknownHostException.getMessage());
+                    unknownHostException.printStackTrace();
+                } catch (IOException ioException) {
+                    Log.d("timestamp", ioException.getMessage());
+                    ioException.printStackTrace();
+                }
+
+                if (dayTimeProtocol != null) {
+                    String[] elements2 = dayTimeProtocol.split(" ");
+                    String[] elements3 = elements2[2].split(":");
+                    String hour = elements3[0];
+                    String minute = elements3[1];
+
+                    String address2 = serverThread.serverSocket.getInetAddress().toString();
+                    if (!data.containsKey(address2))
+                        Log.d("poll result", "none");
+                    else {
+                        String set_alarm = data.get(address2);
+                        String[] alarmm = set_alarm.split(",");
+                        String hour2 = alarmm[0];
+                        String minute2 = alarmm[1];
+
+                        if (Integer.parseInt(hour) > Integer.parseInt(hour2))
+                            Log.d("poll result", "inactive");
+                        else if (Integer.parseInt(hour) < Integer.parseInt(hour2))
+                            Log.d("poll result", "active");
+                        else if (Integer.parseInt(minute) > Integer.parseInt(minute2))
+                            Log.d("poll result", "inactive");
+                        else
+                            Log.d("poll result", "active");
+                    }
+                }
             }
+            else
+                Log.d("timestamp", "timestamp returned none");
 
             pw.println(response);
             pw.flush();
